@@ -57,14 +57,16 @@ def H1soln(x0,l0,L0,h,Afn,bfn,grad_Afn,grad_bfn,Omega,Npl):
     Xh = xf * h + T @ Uh
     
     # integral of x_i * x_j from 0 to h
-    XXh = h * np.outer(xf,xf)
-    XXh += np.outer(xf,T @ Uh) + np.outer(T @ Uh, xf)
-    XXh += T @ UUh @ T.T
+    XXh = np.zeros((N,N))
+    clibH1soln.XXh(p(XXh,N*N),p(xf,N),p(T,N*N),p(Uh,N),p(UUh,N*N), c_double(h), c_int(N))
+    #XXh = h * np.outer(xf,xf)
+    #XXh += np.outer(xf,T @ Uh) + np.outer(T @ Uh, xf)
+    #XXh += T @ UUh @ T.T
     
     # Lambda solution
     dL = np.zeros(Npl)
-    grad_A = grad_Afn(*l0)
-    grad_b = grad_bfn(*l0)
+    grad_A = grad_Afn(*l0)  # 40%
+    grad_b = grad_bfn(*l0)  # in these two functions
     
     for i in range(Npl):
         dL[i] -= grad_b[i] @ Xh
