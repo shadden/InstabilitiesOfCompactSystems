@@ -20,12 +20,14 @@ void UUh(double* out, double* u0, double* eigs, double h, int N){
     }
 }
 
-void XXh(double* out, double* xf, double* T, double* Uh, double* UUh, double h, int N){
+void XXh(double* out, double* xf, double* T, double* Uh, double* u0, double* eigs, double h, int N){
+    double * _UUh = malloc(sizeof(double)*N*N);
+    UUh(_UUh, u0, eigs, h, N);
     double * tmp = malloc(sizeof(double)*N*N);
     for (int i=0;i<N;i++){
         for (int j=0;j<N;j++){
             for (int k=0;k<N;k++){
-                tmp[i*N+j] += UUh[i*N+k]*T[j*N+k];
+                tmp[i*N+j] += _UUh[i*N+k]*T[j*N+k];
             }
         }
     }
@@ -37,6 +39,7 @@ void XXh(double* out, double* xf, double* T, double* Uh, double* UUh, double h, 
         }
     }
     free(tmp);
+    free(_UUh);
     for (int i=0;i<N;i++){
         for (int j=0;j<N;j++){
             out[i*N+j] += h*xf[i]*xf[j];

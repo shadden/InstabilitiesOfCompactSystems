@@ -48,8 +48,8 @@ def H1soln(x0,l0,L0,h,Afn,bfn,grad_Afn,grad_bfn,Omega,Npl):
    
    # integral of u_i * u_j from 0 to h
     N = len(u0)
-    UUh = np.zeros((N,N))
-    clibH1soln.UUh(p(UUh,N*N),p(u0,N),p(eigs,N),c_double(h), c_int(N))
+    #UUh = np.zeros((N,N))
+    #clibH1soln.UUh(p(UUh,N*N),p(u0,N),p(eigs,N),c_double(h), c_int(N))
     ##fn = lambda si,sj: h if np.isclose(si,-sj) else (np.exp((si + sj)*h) - 1) / (si + sj)
     ##UUh = np.outer(u0,u0)  * np.array([[fn(si,sj) for si in eigs] for sj in eigs])
 
@@ -58,7 +58,7 @@ def H1soln(x0,l0,L0,h,Afn,bfn,grad_Afn,grad_bfn,Omega,Npl):
     
     # integral of x_i * x_j from 0 to h
     XXh = np.zeros((N,N))
-    clibH1soln.XXh(p(XXh,N*N),p(xf,N),p(T,N*N),p(Uh,N),p(UUh,N*N), c_double(h), c_int(N))
+    clibH1soln.XXh(p(XXh,N*N),p(xf,N),p(T,N*N),p(Uh,N),p(u0,N), p(eigs,N), c_double(h), c_int(N))
     #XXh = h * np.outer(xf,xf)
     #XXh += np.outer(xf,T @ Uh) + np.outer(T @ Uh, xf)
     #XXh += T @ UUh @ T.T
