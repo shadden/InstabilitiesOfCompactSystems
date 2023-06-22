@@ -82,7 +82,7 @@ class EccentricityResonanceInteraction(object):
             ]
         )
     
-    def b(self,sin_phi1,cos_phi1):
+    def b(self,cos_phi1,sin_phi1):
         C1vec = self.C1_vec
         return np.concatenate((-1 * C1vec * sin_phi1, C1vec * cos_phi1 ))
     
