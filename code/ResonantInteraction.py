@@ -1,10 +1,22 @@
 import numpy as np
 from celmech.disturbing_function import df_coefficient_C, evaluate_df_coefficient_dict
-class EccentricityResonanceInteraction(object):
+
+from ctypes import cdll, c_int, c_double, Structure, POINTER, byref
+clibH1soln = cdll.LoadLibrary("../code/H1soln.so")
+
+class EccentricityResonanceInteraction(Structure):
+    _fields_ = [
+            ("order", c_int),
+            ("C2_mtrx", POINTER(c_double)),
+            ("C1_vec", POINTER(c_double)),
+            ]
     """
     A class for representing first- and second-order eccentricity resonance interactions between pairs of planets.
     """
     def __init__(self,pvars,indexIn,indexOut ,kres,Lambda0In = None, Lambda0Out = None):
+
+        clibH1soln.init_interaction(byref(self))
+
         if kres%2==0:
             self.order = 1
         else:
@@ -26,8 +38,6 @@ class EccentricityResonanceInteraction(object):
         nu_vec = (0,0,0,0)
         alpha = (Lambda0In/Lambda0Out)**2 * (muOut/muIn)**2 * (MOut/MIn)
         
-        self.C2_mtrx = np.zeros((2,2))
-        self.C1_vec = np.zeros(2)
 
         if self.order==1:
             k1 = kres // 2
@@ -42,13 +52,16 @@ class EccentricityResonanceInteraction(object):
             C = df_coefficient_C(*k_vec,*nu_vec)
             NC = evaluate_df_coefficient_dict(C,alpha)
             if l==0:
-                self.C2_mtrx[0,0] = - 2 * Gmm_a2 * NC / self.Lambda0s[0]
+                self.C2_mtrx[0*2+0] = - 2 * Gmm_a2 * NC / self.Lambda0s[0]
             if l==1:
-                self.C2_mtrx[1,0] = self.C2_mtrx[0,1] = - Gmm_a2 * NC / np.sqrt(self.Lambda0s[0] * self.Lambda0s[1])
+                self.C2_mtrx[1*2+0] = self.C2_mtrx[0*2+1] = - Gmm_a2 * NC / np.sqrt(self.Lambda0s[0] * self.Lambda0s[1])
             if l==2:
-                self.C2_mtrx[1,1] = - 2 * Gmm_a2 * NC / self.Lambda0s[1]
+                self.C2_mtrx[1*2+1] = - 2 * Gmm_a2 * NC / self.Lambda0s[1]
             
-        self.C2_mtrx_inv = np.linalg.inv(self.C2_mtrx)
+        # TODO can be optimized
+        np_C2_mtrx = np.array([  [self.C2_mtrx[0*2+0],self.C2_mtrx[0*2+1]],
+                                 [self.C2_mtrx[1*2+0],self.C2_mtrx[1*2+1]] ])
+        self.C2_mtrx_inv = np.linalg.inv(np_C2_mtrx)
 
     def A(self,cos_phi2,sin_phi2):
         r"""
@@ -75,16 +88,22 @@ class EccentricityResonanceInteraction(object):
             Matrix of DF coefficent values
         """
         
+        # TODO can be optimized
+        np_C2_mtrx = np.array([  [self.C2_mtrx[0*2+0],self.C2_mtrx[0*2+1]],
+                                 [self.C2_mtrx[1*2+0],self.C2_mtrx[1*2+1]] ])
+        
         return np.block(
             [
-               [ -cos_phi2 * self.C2_mtrx, -sin_phi2 * self.C2_mtrx],
-               [ -sin_phi2 * self.C2_mtrx,  cos_phi2 * self.C2_mtrx],
+               [ -cos_phi2 * np_C2_mtrx, -sin_phi2 * np_C2_mtrx],
+               [ -sin_phi2 * np_C2_mtrx,  cos_phi2 * np_C2_mtrx],
             ]
         )
     
     def b(self,cos_phi1,sin_phi1):
+        # TODO can be optimized
+        np_C1_vec = np.array([  self.C1_vec[0],self.C1_vec[1]])
         C1vec = self.C1_vec
-        return np.concatenate((-1 * C1vec * sin_phi1, C1vec * cos_phi1 ))
+        return np.concatenate((-1 * np_C1_vec * sin_phi1, np_C1_vec * cos_phi1 ))
     
     def Ainv(self,cos_phi2,sin_phi2):
         r"""

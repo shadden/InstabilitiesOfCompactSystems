@@ -5,6 +5,7 @@ import sympy as sp
 
 import sys
 sys.path.append("../code/")
+from ResonantInteraction import EccentricityResonanceInteraction
 # Generate a simulation of equal mass, evenly spaced planets.
 def get_sim(m,Npl,pratio,exfrac):
     alpha = pratio**(-2/3)
@@ -60,7 +61,6 @@ zero_rule = dict(zip(xvec,np.zeros(2*Npl)))
 b_vec = [sp.diff(pham.N_H,xvec[i]).xreplace(zero_rule).xreplace(angrule) for i in range(2*Npl)]
 
 
-from ResonantInteraction import EccentricityResonanceInteraction
 
 interactions = []
 for i in range(1,Npl):

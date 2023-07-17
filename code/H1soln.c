@@ -7,11 +7,16 @@ struct EccentricityResonanceInteraction {
     double* C1_vec;
 };
 
-struct EccentricityResonanceInteraction* create_interaction(int indexIn, int indexOut, int kres){
-    struct EccentricityResonanceInteraction* interaction = calloc(1,sizeof(struct EccentricityResonanceInteraction));
-    interaction->order = (kres%2==0)?1:2;
+void init_interaction(struct EccentricityResonanceInteraction* interaction){
     interaction->C2_mtrx = calloc(2*2,sizeof(double));
     interaction->C1_vec = calloc(2,sizeof(double));
+}
+
+struct EccentricityResonanceInteraction* create_interaction(int indexIn, int indexOut, int kres){
+    struct EccentricityResonanceInteraction* interaction = calloc(1,sizeof(struct EccentricityResonanceInteraction));
+    init_interaction(interaction);
+    interaction->order = (kres%2==0)?1:2;
+    return interaction;
 }
 
 void free_interaction(struct EccentricityResonanceInteraction* interaction){
