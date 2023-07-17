@@ -1,6 +1,28 @@
 #include <stdlib.h>
 #include <math.h>
 
+struct EccentricityResonanceInteraction {
+    int order;
+    double* C2_mtrx;
+    double* C1_vec;
+};
+
+struct EccentricityResonanceInteraction* create_interaction(int indexIn, int indexOut, int kres){
+    struct EccentricityResonanceInteraction* interaction = calloc(1,sizeof(struct EccentricityResonanceInteraction));
+    interaction->order = (kres%2==0)?1:2;
+    interaction->C2_mtrx = calloc(2*2,sizeof(double));
+    interaction->C1_vec = calloc(2,sizeof(double));
+}
+
+void free_interaction(struct EccentricityResonanceInteraction* interaction){
+    if (interaction){
+        free(interaction->C2_mtrx);
+        free(interaction->C1_vec);
+        free(interaction);
+    }
+}
+
+
 static int isclose(double a, double b){
     return fabs(a-b) <= 1e-8 + 1e-5*fabs(b);
 }
