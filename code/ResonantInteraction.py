@@ -61,8 +61,7 @@ class EccentricityResonanceInteraction(Structure):
                 self.C2_mtrx[1*2+1] = - 2 * Gmm_a2 * NC / self.Lambda0s[1]
             
         # TODO can be optimized
-        np_C2_mtrx = np.array([  [self.C2_mtrx[0*2+0],self.C2_mtrx[0*2+1]],
-                                 [self.C2_mtrx[1*2+0],self.C2_mtrx[1*2+1]] ])
+        np_C2_mtrx = np.ctypeslib.as_array(self.C2_mtrx, (2,2))
         self.C2_mtrx_inv = np.linalg.inv(np_C2_mtrx)
 
     def A(self,cos_phi2,sin_phi2):
