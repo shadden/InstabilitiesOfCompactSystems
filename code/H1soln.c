@@ -6,12 +6,14 @@ struct EccentricityResonanceInteraction {
     double* C2_mtrx;
     double* C1_vec;
     double* b_vec;
+    double* A_mtrx;
 };
 
 void init_interaction(struct EccentricityResonanceInteraction* interaction){
     interaction->C2_mtrx = calloc(2*2,sizeof(double));
     interaction->C1_vec = calloc(2,sizeof(double));
     interaction->b_vec = calloc(4,sizeof(double));
+    interaction->A_mtrx = calloc(4*4,sizeof(double));
 }
 
 struct EccentricityResonanceInteraction* create_interaction(int indexIn, int indexOut, int kres){
@@ -26,6 +28,7 @@ void free_interaction(struct EccentricityResonanceInteraction* interaction){
         free(interaction->C2_mtrx);
         free(interaction->C1_vec);
         free(interaction->b_vec);
+        free(interaction->A_mtrx);
         free(interaction);
     }
 }
@@ -35,6 +38,17 @@ void b(struct EccentricityResonanceInteraction* interaction, double cos_phi1, do
     interaction->b_vec[1] = -interaction->C1_vec[1]*sin_phi1;
     interaction->b_vec[2] = interaction->C1_vec[0]*cos_phi1;
     interaction->b_vec[3] = interaction->C1_vec[1]*cos_phi1;
+}
+
+void A(struct EccentricityResonanceInteraction* interaction, double cos_phi2, double sin_phi2){
+    for (int i=0; i<2; i++){
+        for (int j=0; j<2; j++){
+            interaction->A_mtrx[i*4+j] = -interaction->C2_mtrx[i*2+j]*cos_phi2;
+            interaction->A_mtrx[i*4+j+2]   = -interaction->C2_mtrx[i*2+j]*sin_phi2;
+            interaction->A_mtrx[(i+2)*4+j] = -interaction->C2_mtrx[i*2+j]*sin_phi2;
+            interaction->A_mtrx[(i+2)*4+j+2] = interaction->C2_mtrx[i*2+j]*cos_phi2;
+        }
+    }
 }
 
 static int isclose(double a, double b){
