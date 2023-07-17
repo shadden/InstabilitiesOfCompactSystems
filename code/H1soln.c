@@ -5,11 +5,13 @@ struct EccentricityResonanceInteraction {
     int order;
     double* C2_mtrx;
     double* C1_vec;
+    double* b_vec;
 };
 
 void init_interaction(struct EccentricityResonanceInteraction* interaction){
     interaction->C2_mtrx = calloc(2*2,sizeof(double));
     interaction->C1_vec = calloc(2,sizeof(double));
+    interaction->b_vec = calloc(4,sizeof(double));
 }
 
 struct EccentricityResonanceInteraction* create_interaction(int indexIn, int indexOut, int kres){
@@ -23,10 +25,17 @@ void free_interaction(struct EccentricityResonanceInteraction* interaction){
     if (interaction){
         free(interaction->C2_mtrx);
         free(interaction->C1_vec);
+        free(interaction->b_vec);
         free(interaction);
     }
 }
 
+void b(struct EccentricityResonanceInteraction* interaction, double cos_phi1, double sin_phi1){
+    interaction->b_vec[0] = -interaction->C1_vec[0]*sin_phi1;
+    interaction->b_vec[1] = -interaction->C1_vec[1]*sin_phi1;
+    interaction->b_vec[2] = interaction->C1_vec[0]*cos_phi1;
+    interaction->b_vec[3] = interaction->C1_vec[1]*cos_phi1;
+}
 
 static int isclose(double a, double b){
     return fabs(a-b) <= 1e-8 + 1e-5*fabs(b);

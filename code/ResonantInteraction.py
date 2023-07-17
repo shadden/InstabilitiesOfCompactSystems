@@ -9,6 +9,7 @@ class EccentricityResonanceInteraction(Structure):
             ("order", c_int),
             ("C2_mtrx", POINTER(c_double)),
             ("C1_vec", POINTER(c_double)),
+            ("b_vec", POINTER(c_double)),
             ]
     """
     A class for representing first- and second-order eccentricity resonance interactions between pairs of planets.
@@ -100,10 +101,8 @@ class EccentricityResonanceInteraction(Structure):
         )
     
     def b(self,cos_phi1,sin_phi1):
-        # TODO can be optimized
-        np_C1_vec = np.array([  self.C1_vec[0],self.C1_vec[1]])
-        C1vec = self.C1_vec
-        return np.concatenate((-1 * np_C1_vec * sin_phi1, np_C1_vec * cos_phi1 ))
+        clibH1soln.b(byref(self), c_double(cos_phi1), c_double(sin_phi1))
+        return np.ctypeslib.as_array(self.b_vec, (4,))
     
     def Ainv(self,cos_phi2,sin_phi2):
         r"""
@@ -127,4 +126,5 @@ class EccentricityResonanceInteraction(Structure):
                 [-sin_phi2 * C2inv,  cos_phi2 * C2inv],
             ]
         )
+        print(Ainv)
         return Ainv
