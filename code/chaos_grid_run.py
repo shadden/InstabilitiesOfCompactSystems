@@ -39,5 +39,5 @@ with Pool() as pool:
             parameters.append((j1,j2))
     results = pool.map(run_func,parameters)
 
-results_arr = results.reshape(Ngrid,Ngrid,-1)
+results_arr = np.array(results).reshape(Ngrid,Ngrid,-1)
 np.save(file,results_arr)
