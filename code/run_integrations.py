@@ -50,8 +50,9 @@ if __name__=="__main__":
     pham.set_integrator('DOP853',rtol=1e-5,atol = 1e-5 * rt_amd)
 
     # integration
-    Ntimes = 4 * 512
-    times = np.linspace(0,1e6,Ntimes)
+    Ntimes = 8 * 512
+    tmax = 3e6
+    times = np.linspace(0,tmax,Ntimes)
     values = np.zeros((Ntimes,pham.N_dim))
     for i,t in enumerate(times):
         pham.integrate(t)
