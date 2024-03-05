@@ -36,9 +36,10 @@ for j,k in MMRs:
     Ps=P**np.arange(3)
     ms = m * np.ones(3)
     alpha = P**(-2/3)
-    es = ex_frac * 0.5 * (1 - alpha) * np.ones(3)
+    ex = (P**(2/3)-1)/((P**(2/3)+1)) #(1-alpha) * np.ones(3)
+    eccs = ex_frac * ex * np.ones(3)
     ls,pomegas = np.zeros((2,3))
-    sim = get_rebound_sim(ms,Ps,es,ls,pomegas)
+    sim = get_rebound_sim(ms,Ps,eccs,ls,pomegas)
     pvars = cm.Poincare.from_Simulation(sim)
     pham = cm.PoincareHamiltonian(pvars)
     terms = list_resonance_terms(j,k,inclinations=False)
@@ -62,7 +63,7 @@ for j,k in MMRs:
     Minv_in = np.sum(jvec_in**2 * domega)
     Minv_out = np.sum(jvec_out**2 * domega)
 
-    xs = np.sqrt(Lmbda0s) * es * Z/np.sqrt(2)
+    xs = np.sqrt(Lmbda0s) * eccs * Z/np.sqrt(2)
     dIs_inner = np.array([2 * np.sqrt(2 * np.abs(Pjk_in(x,[],[]) / Minv_in)) for x in xs])
     dIs_outer = np.array([2 * np.sqrt(2 * np.abs(Pjk_out(x,[],[]) / Minv_out)) for x in xs])
     inner_sx_p[(j,k)] = [omega + domega * jvec_in  * np.quantile(dIs_inner,q) for q in [0.5,1]]
@@ -91,8 +92,8 @@ for j1,k1 in MMRs:
         for i,Delta in enumerate(Deltas):
             n,dn,Lambda = three_body_mmr_n_and_dn(j1,k1,j2,k2,-1,ms,Delta,n1=2*np.pi,GM=1)
             smas = (sim.G/n**2)**(1/3)
-            alphas = smas[:-1]/smas[1:]
-            exs = (1-alphas)
+            P2ex = lambda P: (P**(2/3)-1)/(P**(2/3)+1)
+            exs = np.array([P2ex(n[0]/n[1]),P2ex(n[1]/n[2])])
             eccs = ex_frac * np.array([0.5 * exs[0], 0.5 * (0.5 * exs[0] + 0.5 * exs[1]) , 0.5 * exs[1]])
             xs = np.sqrt(ms * np.sqrt(sim.G * smas)/2) * eccs * Z
             C1,C2 = Q_factors(j1,k1,j2,k2,n,dn)
@@ -127,8 +128,8 @@ for j1,k1 in MMRs:
         for i,Delta in enumerate(Deltas):
             n,dn,Lambda = three_body_mmr_n_and_dn(j1,k1,j2,k2,-1,ms,Delta,n1=2*np.pi,GM=1)
             smas = (sim.G/n**2)**(1/3)
-            alphas = smas[:-1]/smas[1:]
-            exs = (1-alphas)
+            P2ex = lambda P: (P**(2/3)-1)/(P**(2/3)+1)
+            exs = np.array([P2ex(n[0]/n[1]),P2ex(n[1]/n[2])])
             eccs = ex_frac * np.array([0.5 * exs[0], 0.5 * (0.5 * exs[0] + 0.5 * exs[1]) , 0.5 * exs[1]])
             xs = np.sqrt(ms * np.sqrt(sim.G * smas)/2) * eccs * Z
             C1,C2 = Q_factors(j1,k1,j2,k2,n,dn)
@@ -159,8 +160,8 @@ n_ext_p_50,n_ext_m_50,n_ext_p_max,n_ext_m_max = np.zeros((4,len(Deltas),3))
 for i,Delta in enumerate(Deltas):
     n,dn,Lambda = three_body_mmr_n_and_dn(j1,k1,j2,k2,+1,ms,Delta,n1=2*np.pi,GM=1)
     smas = (sim.G/n**2)**(1/3)
-    alphas = smas[:-1]/smas[1:]
-    exs = (1-alphas)
+    P2ex = lambda P: (P**(2/3)-1)/(P**(2/3)+1)
+    exs = np.array([P2ex(n[0]/n[1]),P2ex(n[1]/n[2])])
     eccs = ex_frac * np.array([0.5 * exs[0], 0.5 * (0.5 * exs[0] + 0.5 * exs[1]) , 0.5 * exs[1]])
     xs = np.sqrt(ms * np.sqrt(sim.G * smas)/2) * eccs * Z
     omega_in = np.array([k1-j1,j1,0]) @ n
@@ -192,8 +193,8 @@ n_ext_p_50,n_ext_m_50,n_ext_p_max,n_ext_m_max = np.zeros((4,len(Deltas),3))
 for i,Delta in enumerate(Deltas):
     n,dn,Lambda = three_body_mmr_n_and_dn(j1,k1,j2,k2,+1,ms,Delta,n1=2*np.pi,GM=1)
     smas = (sim.G/n**2)**(1/3)
-    alphas = smas[:-1]/smas[1:]
-    exs = (1-alphas)
+    P2ex = lambda P: (P**(2/3)-1)/(P**(2/3)+1)
+    exs = np.array([P2ex(n[0]/n[1]),P2ex(n[1]/n[2])])
     eccs = ex_frac * np.array([0.5 * exs[0], 0.5 * (0.5 * exs[0] + 0.5 * exs[1]) , 0.5 * exs[1]])
     xs = np.sqrt(ms * np.sqrt(sim.G * smas)/2) * eccs * Z
     omega_in = np.array([k1-j1,j1,0]) @ n
