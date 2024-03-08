@@ -2,10 +2,9 @@ import rebound as rb
 import celmech as cm
 import sympy as sp
 import numpy as np
-from celmech.poisson_series_manipulate import PoissonSeries, PSTerm, DFTerm_as_PSterms
-from celmech.poisson_series_manipulate import PoissonSeries_to_GeneratingFunctionSeries
-from celmech.miscellaneous import get_symbol
-from celmech.poisson_series_manipulate import get_N_planet_poisson_series_symbols
+from celmech.poisson_series import PoissonSeries, DFTerm_as_PSterms
+from celmech.poisson_series import PoissonSeries_to_GeneratingFunctionSeries
+from celmech.poisson_series import get_N_planet_poisson_series_symbols
 from celmech.disturbing_function import list_resonance_terms
 
 def term_order(k,nu):
@@ -211,3 +210,41 @@ def three_body_mmr(j1,k1,j2,k2,pm,Delta1,masses,zs,max_deg = None):
     return np.array(((xlow,xhi),(ylow,yhi))), select_series, A, sim
     
 
+
+def in_mmrs_Q(ms,Pjk_in,Pjk_out,state_values,safety_factor = 1.):
+    
+    Lambdas = state_values.T[3*3 + np.array((0,3,6))]
+    etas = state_values.T[1 + np.array((0,3,6))]
+    kappas = state_values.T[1 + 3*3 + np.array((0,3,6))]
+    xs = (kappas-1j*etas)/np.sqrt(2)
+
+    in_inner_res_Q={}
+    for jk,Pjk in Pjk_in.items():
+        j,k = jk
+        jvec = np.array((k-j,j,0))
+        n,dn,_ = three_body_mmr_n_and_dn(j,k,j,k,-1,ms,0.0,n1=2*np.pi,GM=1)
+        Minv = jvec**2 @ dn
+        Ajk = np.array([Pjk([x],[],[]) for x in xs.T])
+        dI = safety_factor * 2 * np.sqrt(2 * np.abs(Ajk / Minv))
+        n_res_plus = np.transpose([n + jvec * dn * X for X in dI])        
+        n_res_minus = np.transpose([n - jvec * dn * X for X in dI])
+        Pratio_plus = n_res_plus[0]/n_res_plus[1]        
+        Pratio_minus = n_res_minus[0]/n_res_minus[1]
+        Pratio_obs = (Lambdas[1]/Lambdas[0])**3 * (ms[0]/ms[1])**3
+        in_inner_res_Q[jk] = np.logical_and(Pratio_obs<Pratio_plus,Pratio_obs>Pratio_minus)
+
+    in_outer_res_Q={}
+    for jk,Pjk in Pjk_out.items():
+        j,k = jk
+        jvec = np.array((0,k-j,j))
+        n,dn,_ = three_body_mmr_n_and_dn(j,k,j,k,-1,ms,0.0,n1=2*np.pi,GM=1)
+        Minv = jvec**2 @ dn
+        Ajk = np.array([Pjk([x],[],[]) for x in xs.T])
+        dI = safety_factor * 2 * np.sqrt(2 * np.abs(Ajk / Minv))
+        n_res_plus = np.transpose([n + jvec * dn * X for X in dI])        
+        n_res_minus = np.transpose([n - jvec * dn * X for X in dI])
+        Pratio_plus = n_res_plus[1]/n_res_plus[2]        
+        Pratio_minus = n_res_minus[1]/n_res_minus[2]
+        Pratio_obs = (Lambdas[2]/Lambdas[1])**3 * (ms[1]/ms[2])**3
+        in_outer_res_Q[jk] = np.logical_and(Pratio_obs<Pratio_plus,Pratio_obs>Pratio_minus)
+    return in_inner_res_Q,in_outer_res_Q

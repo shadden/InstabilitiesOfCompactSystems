@@ -4,8 +4,7 @@ import rebound as rb
 import celmech as cm
 import sympy as sp
 from three_body_mmr import *
-from celmech.disturbing_function import df_coefficient_C,evaluate_df_coefficient_dict
-from celmech.poisson_series_manipulate import bracket
+from celmech.poisson_series import bracket, PSTerm
 import sys
 
 J = int(sys.argv[1])
@@ -211,8 +210,69 @@ for i,Delta in enumerate(Deltas):
 n_ext_plus[(j1,k1,j2,k2)] = (n_ext_p_50,n_ext_m_50,n_ext_p_max,n_ext_m_max)
 
 
+j1,k1 = J,1
+j2,k2 = 2*J+1,2
+jvec = np.array([k1-j1,j1,0]) + np.array([0,k2 - j2,j2])
+Pjk_in = inner_Pjk[(j1,k1)]
+Pjk_out = inner_Pjk[(j2,k2)]
+term = Pjk_in * Pjk_out * j1 * (j2-k2)
+pr = inner_sx_m[(j1,k1)][0][0]/inner_sx_m[(j1,k1)][0][1]
+Delta_min = ((j1-k1)/j1) * pr - 1
+Delta_max = ((j1-k1)/j1) * ((J+1)/J) - 1
+Deltas = np.linspace(Delta_min,Delta_max,NDelta)
+n_ext_p_50,n_ext_m_50,n_ext_p_max,n_ext_m_max = np.zeros((4,len(Deltas),3))
+for i,Delta in enumerate(Deltas):
+    n,dn,Lambda = three_body_mmr_n_and_dn(j1,k1,j2,k2,+1,ms,Delta,n1=2*np.pi,GM=1)
+    smas = (sim.G/n**2)**(1/3)
+    P2ex = lambda P: (P**(2/3)-1)/(P**(2/3)+1)
+    exs = np.array([P2ex(n[0]/n[1]),P2ex(n[1]/n[2])])
+    eccs = ex_frac * np.array([0.5 * exs[0], 0.5 * (0.5 * exs[0] + 0.5 * exs[1]) , 0.5 * exs[1]])
+    xs = np.sqrt(ms * np.sqrt(sim.G * smas)/2) * eccs * Z
+    omega_in = np.array([k1-j1,j1,0]) @ n
+    omega_out = np.array([0,k2 - j2,j2])@ n
+    C = dn[1] * (omega_out**2 + omega_in**2)/(omega_out**2 * omega_in**2)
+    Qs = np.array([C * term(x,[],[]) for x in xs])
+    Minv = jvec**2 @ dn
+    dI_50 = np.quantile(2 * np.sqrt(np.abs(Qs / Minv)),0.5)
+    dI_max = np.quantile(2 * np.sqrt(np.abs(Qs / Minv)),1)
+    n_ext_p_50[i] = n + jvec * dn * dI_50 
+    n_ext_m_50[i] = n - jvec * dn * dI_50 
+    n_ext_p_max[i] = n + jvec * dn * dI_max 
+    n_ext_m_max[i] = n - jvec * dn * dI_max
+n_ext_plus[(j1,k1,j2,k2)] = (n_ext_p_50,n_ext_m_50,n_ext_p_max,n_ext_m_max)
 
 
+j1,k1 = J+1,1
+j2,k2 = 2*J+1,2
+jvec = np.array([k1-j1,j1,0]) + np.array([0,k2 - j2,j2])
+Pjk_in = inner_Pjk[(j1,k1)]
+Pjk_out = inner_Pjk[(j2,k2)]
+term = Pjk_in * Pjk_out * j1 * (j2-k2)
+pr = inner_sx_p[(j1,k1)][0][0]/inner_sx_p[(j1,k1)][0][1]
+Delta_min = ((j1-k1)/j1) * pr - 1
+Delta_max = ((j1-k1)/j1) * ((J)/(J-1)) - 1
+Deltas = np.linspace(Delta_min,Delta_max,NDelta)
+n_ext_p_50,n_ext_m_50,n_ext_p_max,n_ext_m_max = np.zeros((4,len(Deltas),3))
+
+for i,Delta in enumerate(Deltas):
+    n,dn,Lambda = three_body_mmr_n_and_dn(j1,k1,j2,k2,+1,ms,Delta,n1=2*np.pi,GM=1)
+    smas = (sim.G/n**2)**(1/3)
+    P2ex = lambda P: (P**(2/3)-1)/(P**(2/3)+1)
+    exs = np.array([P2ex(n[0]/n[1]),P2ex(n[1]/n[2])])
+    eccs = ex_frac * np.array([0.5 * exs[0], 0.5 * (0.5 * exs[0] + 0.5 * exs[1]) , 0.5 * exs[1]])
+    xs = np.sqrt(ms * np.sqrt(sim.G * smas)/2) * eccs * Z
+    omega_in = np.array([k1-j1,j1,0]) @ n
+    omega_out = np.array([0,k2 - j2,j2])@ n
+    C = dn[1] * (omega_out**2 + omega_in**2)/(omega_out**2 * omega_in**2)
+    Qs = np.array([C * term(x,[],[]) for x in xs])
+    Minv = jvec**2 @ dn
+    dI_50 = np.quantile(2 * np.sqrt(np.abs(Qs / Minv)),0.5)
+    dI_max = np.quantile(2 * np.sqrt(np.abs(Qs / Minv)),1)
+    n_ext_p_50[i] = n + jvec * dn * dI_50 
+    n_ext_m_50[i] = n - jvec * dn * dI_50 
+    n_ext_p_max[i] = n + jvec * dn * dI_max 
+    n_ext_m_max[i] = n - jvec * dn * dI_max
+n_ext_plus[(j1,k1,j2,k2)] = (n_ext_p_50,n_ext_m_50,n_ext_p_max,n_ext_m_max)
 
 import pickle
 with open("resonance_web_data_J{:d}.pkl".format(J),"wb") as fi:

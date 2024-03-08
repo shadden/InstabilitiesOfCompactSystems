@@ -43,6 +43,8 @@ def sim_setup(m,J,y):
 if __name__=="__main__":
 
     import sys
+    from scipy.integrate import solve_ivp
+
     I = int(sys.argv[1])
     J = np.linspace(7,8,40,endpoint=False)[I]
     pham = sim_setup(3e-6,J,0.25)
@@ -51,33 +53,38 @@ if __name__=="__main__":
 
     # integration
     Ntimes = 8 * 512
-    tmax = 3e6
+    tmax = 1e6
     times = np.linspace(0,tmax,Ntimes)
-    values = np.zeros((Ntimes,pham.N_dim))
-    for i,t in enumerate(times):
-        pham.integrate(t)
-        values[i] = pham.state.values
-        if crossQ(pham):
-            tmax = t
-            break
     
-    msk = times<=tmax
-    values=values[msk]
-    times = times[msk]
-    Ntimes = np.sum(msk)
+    # radau method
+    f= lambda t,y: pham.flow_func(*y).reshape(-1)
+    Df= lambda t,y: pham.jacobian_func(*y)
 
+    rt_amd = np.sqrt(np.sum([p.Gamma for p in pham.particles[1:]]))
+    soln = solve_ivp(f,(0,tmax),pham.state.values,t_eval=times,jac = Df, method="Radau", rtol=1e-6,atol=1e-6 * rt_amd)
+
+    # values = np.zeros((Ntimes,pham.N_dim))
+    # for i,t in enumerate(times):
+    #     pham.integrate(t)
+    #     values[i] = pham.state.values
+    #     if crossQ(pham):
+    #         tmax = t
+    #         break
+    
+    values = np.zeros((Ntimes,pham.N_dim))
     E = np.zeros(Ntimes)
     amd = np.zeros(Ntimes)
     ecc = np.zeros((3,Ntimes))
     P = np.zeros((3,Ntimes))
-    for i,val in enumerate(values):
+    for i,val in enumerate(soln.y.T):
+        values[i] = val
         pham.state.values=val
         E[i] = pham.calculate_energy()
         amd[i] = np.sum([p.Gamma for p in pham.particles[1:]])
         for j,p in enumerate(pham.particles[1:]):
             ecc[j,i] = p.e
             P[j,i] = p.P
-    
+        
     
     pham.state.values = values[0]
     pvars0 = pham.state.copy()
@@ -104,7 +111,7 @@ if __name__=="__main__":
             lambda_mean[j,i] = p.l
     
     np.savez_compressed(
-        "chaotic_traj_J0_{:.3f}".format(J),
+        "RADAU_chaotic_traj_J0_{:.3f}".format(J),
         times = times,
         P = P,
         ecc = ecc,
