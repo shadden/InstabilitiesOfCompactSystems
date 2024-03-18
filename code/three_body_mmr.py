@@ -211,7 +211,7 @@ def three_body_mmr(j1,k1,j2,k2,pm,Delta1,masses,zs,max_deg = None):
     
 
 
-def in_mmrs_Q(ms,Pjk_in,Pjk_out,state_values,safety_factor = 1.):
+def in_mmrs_Q(ms,Pjk_in,Pjk_out,state_values,GM = 1 ,safety_factor = 1.):
     
     Lambdas = state_values.T[3*3 + np.array((0,3,6))]
     etas = state_values.T[1 + np.array((0,3,6))]
@@ -222,7 +222,7 @@ def in_mmrs_Q(ms,Pjk_in,Pjk_out,state_values,safety_factor = 1.):
     for jk,Pjk in Pjk_in.items():
         j,k = jk
         jvec = np.array((k-j,j,0))
-        n,dn,_ = three_body_mmr_n_and_dn(j,k,j,k,-1,ms,0.0,n1=2*np.pi,GM=1)
+        n,dn,_ = three_body_mmr_n_and_dn(j,k,j,k,-1,ms,0.0,n1=2*np.pi,GM=GM)
         Minv = jvec**2 @ dn
         Ajk = np.array([Pjk([x],[],[]) for x in xs.T])
         dI = safety_factor * 2 * np.sqrt(2 * np.abs(Ajk / Minv))
@@ -237,7 +237,7 @@ def in_mmrs_Q(ms,Pjk_in,Pjk_out,state_values,safety_factor = 1.):
     for jk,Pjk in Pjk_out.items():
         j,k = jk
         jvec = np.array((0,k-j,j))
-        n,dn,_ = three_body_mmr_n_and_dn(j,k,j,k,-1,ms,0.0,n1=2*np.pi,GM=1)
+        n,dn,_ = three_body_mmr_n_and_dn(j,k,j,k,-1,ms,0.0,n1=2*np.pi,GM=GM)
         Minv = jvec**2 @ dn
         Ajk = np.array([Pjk([x],[],[]) for x in xs.T])
         dI = safety_factor * 2 * np.sqrt(2 * np.abs(Ajk / Minv))
